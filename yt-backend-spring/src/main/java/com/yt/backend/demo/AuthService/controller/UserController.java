@@ -1,5 +1,8 @@
 package com.yt.backend.demo.AuthService.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,8 +28,12 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginDto loginDto) {
-        return userService.login(loginDto);
+    public Map<String,String> login(@RequestBody LoginDto loginDto) {
+        Map<String,String> response = new HashMap<>();
+        String token = userService.login(loginDto);
+        response.put("token", token);
+        response.put("status", "200");
+        return response;
     }
 
     @PostMapping("/delete/{id}")

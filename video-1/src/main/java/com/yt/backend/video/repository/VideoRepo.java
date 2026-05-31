@@ -26,7 +26,9 @@ public interface VideoRepo extends JpaRepository<VideoModel, Long>, JpaSpecifica
                 v.user_image AS userImage,
                 v.views AS views,
                 v.duration AS duration,
-                v.upload_date AS uploadDate
+                v.upload_date AS uploadDate,
+                v.description AS description,
+                v.video AS videoUrl
             FROM videos v
             WHERE
                 LOWER(v.title) LIKE LOWER(CONCAT('%', :query, '%'))

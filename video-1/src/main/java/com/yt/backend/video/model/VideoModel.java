@@ -28,9 +28,9 @@ public class VideoModel {
 
     @Column(columnDefinition = "text[]")
     private List<String> tags;
-    private int views = 0;
-    private int likes = 0;
-    private int dislikes = 0;
+    private Long views = 0l;
+    private Long likes = 0l;
+    private Long dislikes = 0l;
     private Long userId;
     private String userName;
     private String userImage;

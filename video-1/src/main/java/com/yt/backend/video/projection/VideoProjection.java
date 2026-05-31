@@ -20,4 +20,8 @@ public interface VideoProjection {
     Long getDuration();
 
     Instant getUploadDate();
+
+    String getDescription();
+    
+    String getVideoUrl();
 }

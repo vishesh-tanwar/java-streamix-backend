@@ -12,6 +12,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.yt.backend.video.dto.GetVideoResponseDto;
 import com.yt.backend.video.dto.uploadVideoRequestDto;
+import com.yt.backend.video.elastic.VideoDocument;
 import com.yt.backend.video.model.VideoModel;
 import com.yt.backend.video.projection.VideoProjection;
 import com.yt.backend.video.repository.VideoRepo;
@@ -27,48 +28,8 @@ public class VideoService {
       @Autowired
     private Cloudinary cloudinary;
 
-    // public String uploadVideo(uploadVideoRequestDto requestDto) {
-    //     try {
-    //         // 1. Save Video File
-    //         String original = requestDto.getVideo().getOriginalFilename();
-    //         String videoSafeName = original.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
-    //         String videoFileName = System.currentTimeMillis() + "_" + videoSafeName;
-    //         Path videoPath = Paths.get(VIDEO_UPLOAD_DIR + videoFileName);
-    //         Files.createDirectories(videoPath.getParent());
-    //         Files.copy(requestDto.getVideo().getInputStream(), videoPath, StandardCopyOption.REPLACE_EXISTING);
-
-    //         String originalThumbnail = requestDto.getThumbnail().getOriginalFilename();
-    //         String thumbnailSafeName = originalThumbnail.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
-    //         String thumbnailFileName = System.currentTimeMillis() + "_" + thumbnailSafeName;
-    //         Path thumbPath = Paths.get(THUMB_UPLOAD_DIR + thumbnailFileName);
-    //         Files.createDirectories(thumbPath.getParent());
-    //         Files.copy(requestDto.getThumbnail().getInputStream(), thumbPath, StandardCopyOption.REPLACE_EXISTING);
-
-    //         VideoModel video = new VideoModel();
-    //         video.setTitle(requestDto.getTitle());
-    //         video.setDescription(requestDto.getDescription());
-    //         video.setType(requestDto.getType());
-    //         video.setTags(requestDto.getTags());
-    //         video.setVideo("/videos/" + videoFileName);
-    //         video.setThumbnail("/thumbnails/" + thumbnailFileName);
-    //         video.setLikes(0);
-    //         video.setDislikes(0);
-    //         video.setViews(0);
-    //         video.setDuration(null);
-    //         video.setUserId(7L);
-    //         video.setUserName("brock");
-    //         video.setUserImage(null);
-
-    //         videoRepo.save(video);
-
-    //         return "Video uploaded successfully";
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //         return "Video upload failed: " + e.getMessage();
-    //     }
-
-    // }
-
+    @Autowired
+    private ElasticSearchService elasticsearchService;
 
     public String uploadVideo(uploadVideoRequestDto requestDto,Long userId) {
         try {
@@ -107,14 +68,27 @@ public class VideoService {
             video.setVideo(videoUrl);
             video.setThumbnail(thumbnailUrl);
 
-            video.setLikes(0);
-            video.setDislikes(0);
-            video.setViews(0);
+            video.setLikes(0l);
+            video.setDislikes(0l);
+            video.setViews(0l);
 
             video.setUserId(userId);
             video.setUserName("brock");
 
             videoRepo.save(video);
+
+            VideoDocument document =
+                VideoDocument.builder()
+                        .id(video.getId())
+                        .title(video.getTitle())
+                        .description(video.getDescription())
+                        .userName(video.getUserName())
+                        .tags(video.getTags())
+                        .views(video.getViews())
+                        .likes(video.getLikes())
+                        .build();
+
+            elasticsearchService.indexVideo(document);
 
             return "Video uploaded successfully";
 
@@ -125,15 +99,6 @@ public class VideoService {
             return "Upload failed: " + e.getMessage();
         }
     }
-
-    // public Page<GetVideoResponseDto> getVideos(String query, int page, int size)
-    // {
-    // Specification<VideoModel> specs = VideoSpecification.getSpecification(query);
-    // PageRequest pageRequest = PageRequest.of(page, size);
-    // Page<VideoModel> videoPage = videoRepo.findAll(specs, pageRequest);
-    // return null;
-
-    // }
 
     public Page<GetVideoResponseDto> getVideos(String query, int page, int size) {
 
@@ -146,6 +111,7 @@ public class VideoService {
         return results.map(v -> {
             GetVideoResponseDto dto = new GetVideoResponseDto();
             dto.setVideoId(v.getId());
+            dto.setVideoId(v.getId());
             dto.setTitle(v.getTitle());
             dto.setThumbnail(v.getThumbnail());
             dto.setViews(Long.valueOf(v.getViews()));
@@ -154,6 +120,8 @@ public class VideoService {
             dto.setUserImage(v.getUserImage());
             dto.setDuration(v.getDuration());
             dto.setUploadDate(v.getUploadDate());
+            dto.setDescription(v.getDescription());
+            dto.setVideoUrl(v.getVideoUrl());
             return dto;
         });
     }

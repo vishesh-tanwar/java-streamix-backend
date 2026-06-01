@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,8 @@ import com.yt.backend.demo.AuthService.dtos.RegisterDto;
 import com.yt.backend.demo.AuthService.model.UserModel;
 import com.yt.backend.demo.AuthService.service.UserService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -23,12 +26,12 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/register")
-    public UserModel register(@RequestBody RegisterDto registerDto) {
+    public UserModel register(@Valid @RequestBody RegisterDto registerDto) {
         return userService.register(registerDto);
     }
 
     @PostMapping("/login")
-    public Map<String,String> login(@RequestBody LoginDto loginDto) {
+    public Map<String,String> login(@Valid @RequestBody LoginDto loginDto) {
         Map<String,String> response = new HashMap<>();
         String token = userService.login(loginDto);
         response.put("token", token);
@@ -37,8 +40,12 @@ public class UserController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
+
         userService.deleteUser(id);
-        return "User deleted successfully";
+    
+        return ResponseEntity.ok(
+                Map.of("message", "User deleted successfully", "status", "true")
+        );
     }
 }

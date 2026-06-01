@@ -49,6 +49,7 @@ public class UserService {
     }
 
     public String login(LoginDto loginDto) {
+        
         UserModel user = userRepository.findByEmail(loginDto.getEmail());
         if (user == null || !passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid email or password");

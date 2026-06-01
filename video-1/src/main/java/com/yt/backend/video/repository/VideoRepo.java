@@ -2,7 +2,6 @@ package com.yt.backend.video.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +12,7 @@ import com.yt.backend.video.projection.VideoProjection;
 import org.springframework.data.domain.Page;
 
 @Repository
-public interface VideoRepo extends JpaRepository<VideoModel, Long>, JpaSpecificationExecutor<VideoModel> {
+public interface VideoRepo extends JpaRepository<VideoModel, Long> {
     Page<VideoModel> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 
     @Query(value = """

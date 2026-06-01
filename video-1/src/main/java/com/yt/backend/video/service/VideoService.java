@@ -13,8 +13,8 @@ import com.cloudinary.utils.ObjectUtils;
 import com.yt.backend.video.dto.GetVideoResponseDto;
 import com.yt.backend.video.dto.uploadVideoRequestDto;
 import com.yt.backend.video.elastic.VideoDocument;
+import com.yt.backend.video.globalException.VideoUploadException;
 import com.yt.backend.video.model.VideoModel;
-import com.yt.backend.video.projection.VideoProjection;
 import com.yt.backend.video.repository.VideoRepo;
 
 @Service
@@ -33,80 +33,76 @@ public class VideoService {
 
     public String uploadVideo(uploadVideoRequestDto requestDto,Long userId) {
         try {
-
-            // VIDEO UPLOAD
-            Map videoUploadResult = cloudinary.uploader().upload(
-                    requestDto.getVideo().getBytes(),
-                    ObjectUtils.asMap(
-                            "resource_type", "video",
-                            "folder", "streamix/videos"
-                    )
+            Map videoUploadResult;
+            Map thumbUploadResult;
+                // VIDEO UPLOAD
+            videoUploadResult = cloudinary.uploader().upload(
+                requestDto.getVideo().getBytes(),
+                ObjectUtils.asMap(
+                        "resource_type", "video",
+                        "folder", "streamix/videos"
+                )
             );
-
+            thumbUploadResult = cloudinary.uploader().upload(
+                requestDto.getThumbnail().getBytes(),
+                ObjectUtils.asMap(
+                        "folder", "streamix/thumbnails"
+                )
+            );
+            
             String videoUrl =
-                    videoUploadResult.get("secure_url").toString();
-
+            videoUploadResult.get("secure_url").toString();
+            
             // THUMBNAIL UPLOAD
-            Map thumbUploadResult = cloudinary.uploader().upload(
-                    requestDto.getThumbnail().getBytes(),
-                    ObjectUtils.asMap(
-                            "folder", "streamix/thumbnails"
-                    )
-            );
-
+            
+            
             String thumbnailUrl =
-                    thumbUploadResult.get("secure_url").toString();
-
+            thumbUploadResult.get("secure_url").toString();
+            
             // SAVE DB
             VideoModel video = new VideoModel();
-
+            
             video.setTitle(requestDto.getTitle());
             video.setDescription(requestDto.getDescription());
             video.setType(requestDto.getType());
             video.setTags(requestDto.getTags());
-
+            
             video.setVideo(videoUrl);
             video.setThumbnail(thumbnailUrl);
-
+            
             video.setLikes(0l);
             video.setDislikes(0l);
             video.setViews(0l);
-
+            
             video.setUserId(userId);
             video.setUserName("brock");
-
+            
             videoRepo.save(video);
-
+            
             VideoDocument document =
-                VideoDocument.builder()
-                        .id(video.getId())
-                        .title(video.getTitle())
-                        .description(video.getDescription())
-                        .userName(video.getUserName())
-                        .tags(video.getTags())
-                        .views(video.getViews())
-                        .likes(video.getLikes())
-                        .build();
-
+            VideoDocument.builder()
+            .id(video.getId())
+            .title(video.getTitle())
+            .description(video.getDescription())
+            .userName(video.getUserName())
+            .tags(video.getTags())
+            .views(video.getViews())
+            .likes(video.getLikes())
+            .build();
+            
             elasticsearchService.indexVideo(document);
-
-            return "Video uploaded successfully";
-
+            
+            return "Video uploaded successfully";       
         } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return "Upload failed: " + e.getMessage();
+            throw new VideoUploadException("upload failed", e);
         }
     }
 
-    public Page<GetVideoResponseDto> getVideos(String query, int page, int size) {
+    public Page<GetVideoResponseDto> getVideos(int page, int size) {
 
         PageRequest pageable = PageRequest.of(page, size);
 
-        String q = (query == null || query.isBlank()) ? "" : query.toLowerCase();
-
-        Page<VideoProjection> results = videoRepo.searchVideos(q, pageable);
+        Page<VideoModel> results = videoRepo.findAll(pageable);
 
         return results.map(v -> {
             GetVideoResponseDto dto = new GetVideoResponseDto();
@@ -121,7 +117,7 @@ public class VideoService {
             dto.setDuration(v.getDuration());
             dto.setUploadDate(v.getUploadDate());
             dto.setDescription(v.getDescription());
-            dto.setVideoUrl(v.getVideoUrl());
+            dto.setVideoUrl(v.getVideo());
             return dto;
         });
     }

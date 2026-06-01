@@ -22,10 +22,10 @@ public class VideoController {
     private VideoService videoService;
 
     @GetMapping("/get")
-    public Page<GetVideoResponseDto> getVideos(@RequestParam(required = false) String search,
+    public Page<GetVideoResponseDto> getVideos(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return videoService.getVideos(search, page, size);
+        return videoService.getVideos(page, size);
     }
 
     @PostMapping("/upload")

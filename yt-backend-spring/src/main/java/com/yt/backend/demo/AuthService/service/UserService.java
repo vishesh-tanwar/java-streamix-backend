@@ -15,8 +15,12 @@ import com.yt.backend.demo.AuthService.model.UserModel;
 import com.yt.backend.demo.AuthService.repository.UserRepository;
 import com.yt.backend.demo.AuthService.utils.JwtUtils;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class UserService {
+
+    org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -69,12 +73,20 @@ public class UserService {
         return userDetails;
     }
 
-    public void deleteUser(Long userId) {
+    @Transactional
+    public void deleteUser(Long userId) {    
         userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
+    
         userRepository.deleteById(userId);
-
-        kafkaTemplate.send("user-deleted-topic", userId);
+        
+        kafkaTemplate.send("user-deleted-topic", userId)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("Kafka failed", ex);
+                    } else {
+                        log.info("Kafka success");
+                    }
+                });
     }
 }

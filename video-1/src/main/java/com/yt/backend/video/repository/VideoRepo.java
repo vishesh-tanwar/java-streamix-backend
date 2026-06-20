@@ -42,4 +42,5 @@ public interface VideoRepo extends JpaRepository<VideoModel, Long> {
             """, nativeQuery = true)
     Page<VideoProjection> searchVideos(@Param("query") String query, Pageable pageable);
 
+    Page<VideoModel> findByType(int type, Pageable pageable);
 }

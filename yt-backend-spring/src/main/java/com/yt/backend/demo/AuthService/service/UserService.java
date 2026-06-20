@@ -89,4 +89,8 @@ public class UserService {
                     }
                 });
     }
+
+    public boolean validateToken(String token) {
+        return jwtUtils.verifyToken(token);
+    }
 }

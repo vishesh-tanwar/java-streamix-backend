@@ -48,4 +48,13 @@ public class UserController {
                 Map.of("message", "User deleted successfully", "status", "true")
         );
     }
+
+    @PostMapping("/validateToken")
+    public Map<String, Object> validateToken(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        boolean isValid = userService.validateToken(token);
+        Map<String, Object> response = new HashMap<>();
+        response.put("isValid", isValid);
+        return response;
+    }
 }

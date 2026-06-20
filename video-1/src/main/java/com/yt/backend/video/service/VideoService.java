@@ -25,13 +25,13 @@ public class VideoService {
     @Autowired
     private VideoRepo videoRepo;
 
-      @Autowired
+    @Autowired
     private Cloudinary cloudinary;
 
     @Autowired
     private ElasticSearchService elasticsearchService;
 
-    public String uploadVideo(uploadVideoRequestDto requestDto,Long userId) {
+    public  String uploadVideo(uploadVideoRequestDto requestDto,Long userId) {
         try {
             Map videoUploadResult;
             Map thumbUploadResult;
@@ -52,10 +52,10 @@ public class VideoService {
             
             String videoUrl =
             videoUploadResult.get("secure_url").toString();
+
+            Double duration = (Double) videoUploadResult.get("duration");
             
             // THUMBNAIL UPLOAD
-            
-            
             String thumbnailUrl =
             thumbUploadResult.get("secure_url").toString();
             
@@ -69,6 +69,7 @@ public class VideoService {
             
             video.setVideo(videoUrl);
             video.setThumbnail(thumbnailUrl);
+            video.setDuration(duration);
             
             video.setLikes(0l);
             video.setDislikes(0l);
@@ -98,11 +99,17 @@ public class VideoService {
         }
     }
 
-    public Page<GetVideoResponseDto> getVideos(int page, int size) {
+    public Page<GetVideoResponseDto> getVideos(int type, int page, int size) {
 
         PageRequest pageable = PageRequest.of(page, size);
 
-        Page<VideoModel> results = videoRepo.findAll(pageable);
+        Page<VideoModel> results ;
+
+        if (type != -1) {
+            results = videoRepo.findByType(type,pageable);
+        } else {
+            results = videoRepo.findAll(pageable);
+        }
 
         return results.map(v -> {
             GetVideoResponseDto dto = new GetVideoResponseDto();

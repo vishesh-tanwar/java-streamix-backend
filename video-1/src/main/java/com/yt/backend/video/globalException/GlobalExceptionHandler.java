@@ -14,7 +14,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String,String> handleVideoUploadEx(VideoUploadException ex){
         Map<String,String> response = new HashMap<>();
-        response.put("error", "Video upload failed: " + ex.getMessage());
+        response.put("error", "Video upload failed: " + ex.getCause());
         return response;
     }
 

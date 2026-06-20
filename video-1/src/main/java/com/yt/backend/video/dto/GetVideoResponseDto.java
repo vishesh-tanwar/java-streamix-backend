@@ -16,7 +16,7 @@ public class GetVideoResponseDto {
     private String userName;
     private String userImage;
     private Instant uploadDate;
-    private Long duration;
+    private Double duration;
     private String description;
     private String videoUrl;
 }

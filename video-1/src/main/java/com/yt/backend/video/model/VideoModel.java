@@ -34,6 +34,6 @@ public class VideoModel {
     private Long userId;
     private String userName;
     private String userImage;
-    private Long duration;
+    private Double duration;
     private Instant uploadDate = Instant.now();
 }

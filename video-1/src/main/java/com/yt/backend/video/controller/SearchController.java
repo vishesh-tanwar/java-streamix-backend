@@ -1,6 +1,6 @@
 package com.yt.backend.video.controller;
 
-import com.yt.backend.video.dto.SearchResponseDto;
+import com.yt.backend.video.dto.GetVideoResponseDto;
 import com.yt.backend.video.service.SearchService;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class SearchController {
     // Video Search API
 
     @GetMapping("/videos")
-    public List<SearchResponseDto> searchVideos(
+    public List<GetVideoResponseDto> searchVideos(
 
             @RequestParam String q,
 

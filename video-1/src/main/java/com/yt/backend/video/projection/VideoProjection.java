@@ -15,13 +15,15 @@ public interface VideoProjection {
 
     String getUserImage();
 
-    Integer getViews();
+    Long getViews();
 
-    Long getDuration();
+    Double getDuration();
 
     Instant getUploadDate();
 
     String getDescription();
     
     String getVideoUrl();
+
+    Long getLikes();
 }

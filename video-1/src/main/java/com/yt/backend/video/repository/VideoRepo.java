@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 import com.yt.backend.video.model.VideoModel;
 import com.yt.backend.video.projection.VideoProjection;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 
 @Repository
@@ -41,6 +43,26 @@ public interface VideoRepo extends JpaRepository<VideoModel, Long> {
                 OR :query = ANY(v.tags)
             """, nativeQuery = true)
     Page<VideoProjection> searchVideos(@Param("query") String query, Pageable pageable);
+
+    @Query(value = """
+            SELECT
+                v.id AS id,
+                v.title AS title,
+                v.thumbnail AS thumbnail,
+                v.user_Id AS userId,
+                v.user_name AS userName,
+                v.user_image AS userImage,
+                v.views AS views,
+                v.duration AS duration,
+                v.upload_date AS uploadDate,
+                v.description AS description,
+                v.video AS videoUrl,
+                v.likes AS likes
+            FROM videos v
+            WHERE
+                v.id IN :ids
+            """, nativeQuery = true)
+    List<VideoProjection> getVideosByIds(@Param("ids") Long[] ids);
 
     Page<VideoModel> findByType(int type, Pageable pageable);
 }

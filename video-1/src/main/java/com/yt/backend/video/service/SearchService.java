@@ -7,17 +7,25 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 
-import com.yt.backend.video.dto.SearchResponseDto;
+import com.yt.backend.video.dto.GetVideoResponseDto;
 import com.yt.backend.video.elastic.VideoDocument;
+import com.yt.backend.video.projection.VideoProjection;
+import com.yt.backend.video.repository.VideoRepo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class SearchService {
 
     private final ElasticsearchClient elasticsearchClient;
+
+    private final VideoRepo videoRepo;
 
     // SEARCH SUGGESTIONS
 
@@ -75,13 +83,14 @@ public class SearchService {
         }
     }
 
-    public List<SearchResponseDto> searchVideos(
+public List<GetVideoResponseDto> searchVideos(
         String keyword,
         int page,
         int size
-    ) {
+) {
     try {
-        SearchResponse<VideoDocument> response = elasticsearchClient.search(s -> s
+        SearchResponse<VideoDocument> response =
+                elasticsearchClient.search(s -> s
                                 .index("videos")
                                 .from(page * size)
                                 .size(size)
@@ -100,40 +109,57 @@ public class SearchService {
                                         .score(sc -> sc.order(
                                                 co.elastic.clients.elasticsearch._types.SortOrder.Desc
                                         ))
-                                )
-                        ,
+                                ),
                         VideoDocument.class
                 );
 
-        List<SearchResponseDto> videos =
-                new ArrayList<>();
-
-        response.hits()
+        // Elasticsearch ranking
+        List<Long> videoIds = response.hits()
                 .hits()
-                .forEach(hit -> {
-                    VideoDocument doc =
-                            hit.source();
+                .stream()
+                .map(hit -> hit.source())
+                .filter(Objects::nonNull)
+                .map(VideoDocument::getId)
+                .toList();
 
-                    if (doc != null) {
-                        videos.add(
-                                SearchResponseDto.builder()
-                                        .id(doc.getId())
-                                        .title(doc.getTitle())
-                                        .description(doc.getDescription())
-                                        .channelName(doc.getUserName())
-                                        .views(doc.getViews())
-                                        .likes(doc.getLikes())
-                                        .build()
-                        );
-                    }
-                });
-
-        return videos;
-
-        } catch (Exception e) {
-            throw new RuntimeException(
-                    "Search failed"
-            );
+        if (videoIds.isEmpty()) {
+            return List.of();
         }
+
+        // One DB query
+        List<VideoProjection> projections =
+                videoRepo.getVideosByIds(videoIds.toArray(new Long[0]));
+
+        // Map DB results by ID
+        Map<Long, VideoProjection> videoMap =
+                projections.stream()
+                        .collect(Collectors.toMap(
+                                VideoProjection::getId,
+                                Function.identity()
+                        ));
+
+        // Restore Elasticsearch ranking
+        return videoIds.stream()
+                .map(videoMap::get)
+                .filter(Objects::nonNull)
+                .map(video -> new GetVideoResponseDto(
+                        video.getId(),
+                        video.getTitle(),
+                        video.getThumbnail(),
+                        video.getViews(),
+                        video.getUserId(),
+                        video.getUserName(),
+                        video.getUserImage(),
+                        video.getUploadDate(),
+                        video.getDuration(),
+                        video.getDescription(),
+                        video.getVideoUrl(),
+                        video.getLikes()     
+                ))
+                .toList();
+
+    } catch (Exception e) {
+        throw new RuntimeException("Search failed", e);
     }
+}
 }

@@ -1,4 +1,4 @@
-package com.yt.backend.video.security;
+package com.youtube.history.filters;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.yt.backend.video.utils.JwtUtils;
+import com.youtube.history.utils.JwtUtils;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,10 +23,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private JwtUtils jwtUtils;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
-
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -36,30 +34,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        // 1. Validate JWT
-        if (!jwtUtils.verifyToken(token)) {
+        if (!jwtUtils.verifyToken(token)){
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Extract user details from token
         String email = jwtUtils.getEmail(token);
         Long userId = jwtUtils.getUserId(token);
 
-        System.out.println("TOKEN : " + token);
-        System.out.println("EMAIL : " + email);
-        System.out.println("USER ID : " + userId);
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email,null,new ArrayList<>());
 
-        if (jwtUtils.verifyToken(token)) {
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    email, null,new ArrayList<>());
+        authToken.setDetails(userId);
 
-            // Store userId inside auth object (OPTIONAL)
-            authToken.setDetails(userId);
-
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-        }
+        SecurityContextHolder.getContext().setAuthentication(authToken);
 
         filterChain.doFilter(request, response);
     }
+    
 }

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package video;
+
+option java_multiple_files = true;
+option java_package = "com.yt.backend.video.grpc";
+option java_outer_classname = "VideoProto";
+
+service VideoGrpcService {
+    rpc IncVideoViewCount (IncViewCountRequest) returns (IncViewCountResponse);
+}
+
+message IncViewCountRequest {
+    int64 videoId = 1;
+}
+
+message IncViewCountResponse {
+    bool success = 1;
+    string message = 2;
+}

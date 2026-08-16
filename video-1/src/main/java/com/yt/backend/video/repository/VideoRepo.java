@@ -2,12 +2,15 @@ package com.yt.backend.video.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.yt.backend.video.model.VideoModel;
 import com.yt.backend.video.projection.VideoProjection;
+
+import jakarta.transaction.Transactional;
 
 import java.util.List;
 
@@ -65,4 +68,16 @@ public interface VideoRepo extends JpaRepository<VideoModel, Long> {
     List<VideoProjection> getVideosByIds(@Param("ids") Long[] ids);
 
     Page<VideoModel> findByType(int type, Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query(
+        value = """
+            UPDATE videos
+            SET views = views + 1
+            WHERE id = :videoId
+            """,
+        nativeQuery = true
+    )
+    int incrementViewCount(@Param("videoId") Long videoId);
 }

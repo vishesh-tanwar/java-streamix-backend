@@ -128,4 +128,17 @@ public class VideoService {
             return dto;
         });
     }
+
+    public boolean IncVideoViewCount(Long videoId) {
+        try {
+            // VideoModel video = videoRepo.findById(videoId).orElseThrow(() -> new RuntimeException("Video not found"));
+            // video.setViews(video.getViews() + 1);
+            // videoRepo.save(video);
+            int updateRow = videoRepo.incrementViewCount(videoId);
+
+            return updateRow > 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
